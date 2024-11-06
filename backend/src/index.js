@@ -4,11 +4,14 @@ const morgan = require('morgan');
 
 
 const serviciosRoutes = require('./routes/servicios.routes')
+const caracteristicasRoutes = require('./routes/caracteristicas.routes')
 const app = express();
 
 app.use(morgan('dev'));
 app.use(express.json());
-app.use('/api',serviciosRoutes);
+app.use('/api/servicios',serviciosRoutes);
+app.use('/api/caracteristicas', caracteristicasRoutes);
+
 
 app.listen(3000);
 
