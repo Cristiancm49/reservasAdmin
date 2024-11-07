@@ -1657,7 +1657,34 @@ CALL actualizarReserva(
     pcantidadPersonas => 3,       
     pidMetodoDePago => 2           
 );
-
+-- Iniciar sesion
+    CREATE OR REPLACE FUNCTION usuarios.iniciarSesion(
+    pemail VARCHAR,
+    pcontrasena VARCHAR
+)
+RETURNS TABLE (
+    idUsuario INT,
+    Email VARCHAR,
+    idTurista INT,
+    idEstablecimiento INT,
+    idRol INT,
+    estadoUsuario estado_activo_inactivo
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        usuario.idUsuario,
+        usuario.Email,
+        usuario.idTurista,
+        usuario.idEstablecimiento,
+        usuario.idRol,
+        usuario.estadoUsuario
+    FROM usuarios.usuario
+    WHERE usuario.Email = pemail 
+      AND usuario.ContrasenaUsuario = pcontrasena
+      AND usuario.estadoUsuario = 'ACTIVO';
+END;
+$$ LANGUAGE plpgsql;
 
 -- Procedimiento para crear reseñas
 

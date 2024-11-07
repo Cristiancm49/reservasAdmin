@@ -42,7 +42,7 @@ const getReservasPorEstablecimiento = async (req, res) => {
 
     try {
       const query = `
-        SELECT * FROM obtenerReservasPorEstablecimiento($1);
+        SELECT * FROM reservasPorEstablecimiento($1);
       `;
   
       const result = await pool.query(query, [idEstablecimiento]);
@@ -99,10 +99,49 @@ const createReserva = async(req, res) => {
     }
 };
 
+const updateReserva = async (req, res) => {
+        const { idReserva } = req.params;
+        const {
+            fechaSalida,
+            fechaRegreso,
+            cantidadPersonas,
+            metodoPago
+
+        } = req.body;
+    try {
+        const query = `
+        call actualizarReserva(
+            pidReserva := $1,               
+            pfechaSalida := $2,  
+            pfechaRegreso := $3, 
+            pcantidadPersonas := $4,       
+            pidMetodoDePago := $5 
+        );
+        `
+        await pool.query(query, [
+            idReserva,
+            fechaSalida,
+            fechaRegreso,
+            cantidadPersonas,
+            metodoPago]);
+
+        res.status(200).json({
+            message: 'Se actualizo la informacion de la reserva'
+        })
+
+    } catch (error) {
+        console.error("Error al modificar una reserva:", error);
+    res
+      .status(500)
+      .json({ error: "Ocurrió un error al modificar una reserva" });
+    }
+}
+
 
 module.exports = {
     createReserva,
     getReservasPorEstablecimiento,
     getReservasPorTurista,
-    getReserva
+    getReserva,
+    updateReserva
 }
