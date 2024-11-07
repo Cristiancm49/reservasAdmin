@@ -1282,7 +1282,6 @@ CREATE DATABASE reservas;
         pidServicio INT,
         pidMetodoDePago INT,
         pcantidadPersonas INT,
-        pfechaReserva DATE,
         pfechaSalida DATE,
         pfechaRegreso DATE,
         pcodigoCupon VARCHAR(5) DEFAULT NULL
@@ -1299,12 +1298,10 @@ CREATE DATABASE reservas;
         vidReserva INT;
     BEGIN
         
-        
         IF pfechaSalida < CURRENT_DATE THEN
-            RAISE EXCEPTION 'La fecha de salida (%), no puede ser anterior a la fecha actual', pfechaSalida;
+            RAISE EXCEPTION 'La fecha de salida (%) no puede ser anterior a la fecha actual', pfechaSalida;
         END IF;
 
-        
         IF pfechaRegreso < pfechaSalida THEN
             RAISE EXCEPTION 'La fecha de regreso (%) no puede ser anterior a la fecha de salida (%)', pfechaRegreso, pfechaSalida;
         END IF;
@@ -1331,12 +1328,11 @@ CREATE DATABASE reservas;
             RAISE EXCEPTION 'No hay capacidad disponible para el servicio en las fechas solicitadas';
         END IF;
 
-        
+    
         SELECT finalPrecio INTO vprecioFinal
         FROM servicios.vistaServicios
         WHERE vistaServicios.servicioId = pidServicio;
 
-        
         IF vprecioFinal IS NULL THEN
             RAISE EXCEPTION 'No se encontró el precio final para el servicio con id %', pidServicio;
         END IF;
@@ -1352,11 +1348,10 @@ CREATE DATABASE reservas;
                 RAISE EXCEPTION 'El código de cupón (%) no es válido o no está activo', pcodigoCupon;
             END IF;
             
-            vprecioFinal := vprecioFinal - (vprecioFinal * (vdescuento / 100.00));
-            
+        vprecioFinal := vprecioFinal - (vprecioFinal * (vdescuento / 100.00));
         END IF;
 
-      
+    
         vtotalPago := vprecioFinal * pcantidadPersonas * vdiasReserva;
 
         
@@ -1373,7 +1368,7 @@ CREATE DATABASE reservas;
             estadoReserva
         ) VALUES (
             pcantidadPersonas,
-            pfechaReserva,
+            CURRENT_DATE,  
             pfechaSalida,
             pfechaRegreso,
             vtotalPago,
@@ -1384,7 +1379,7 @@ CREATE DATABASE reservas;
             'ACTIVA'
         ) RETURNING idReserva INTO vidReserva;
 
-        -- Crear la factura asociada a la reserva
+        
         INSERT INTO reservas.facturaReserva (
             idReserva,
             fechaEmisionFactura,
@@ -1401,18 +1396,158 @@ CREATE DATABASE reservas;
     END;
     $$;
 
-
-    CALL crearReserva(
-    pidTurista => 1,             
-    pidServicio => 1,           
-    pidMetodoDePago => 3,         
-    pcantidadPersonas => 2,       
-    pfechaReserva => CURRENT_DATE, 
-    pfechaSalida => '2025-12-05', 
-    pfechaRegreso => '2025-12-10', 
-    pcodigoCupon => 'desc10'       
+CALL crearReserva(
+    pidTurista => 1,               
+    pidServicio => 1,             
+    pidMetodoDePago => 3,          
+    pcantidadPersonas => 4,        
+    pfechaSalida => '2024-12-05',  
+    pfechaRegreso => '2024-12-10', 
+    pcodigoCupon => 'desc10'
 );
 
+-- ver las reservas por cada establecimiento
+CREATE OR REPLACE FUNCTION reservasPorEstablecimiento(pidEstablecimiento INT)
+RETURNS TABLE(
+    reservaId INT,
+    cantidadPersonas INT,
+    fechaReserva DATE,
+    fechaSalida DATE,
+    fechaRegreso DATE,
+    totalPago DECIMAL(10,2),
+    estadoReserva estado_reserva,
+    servicioId INT,
+    servicioNombre VARCHAR,
+    turistaId INT,
+    turistaNombre VARCHAR,
+    metodoPagoNombre VARCHAR
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        r.idReserva AS reservaId,
+        r.cantidadPersonas,
+        r.fechaReserva,
+        r.fechaSalida,
+        r.fechaRegreso,
+        r.totalPago,
+        r.estadoReserva,
+        s.idServicio AS servicioId,
+        s.nombreServicio AS servicioNombre,
+        t.idTurista AS turistaId,
+        CONCAT(t.primerNombreTurista, ' ', t.primerApellidoTurista)::VARCHAR AS turistaNombre,
+        mp.nombreMetodoPago AS metodoPagoNombre
+    FROM 
+        reservas.reserva AS r
+    JOIN 
+        servicios.servicio AS s ON r.idServicio = s.idServicio
+    JOIN 
+        usuarios.establecimiento AS e ON s.idEstablecimiento = e.idEstablecimiento
+    JOIN 
+        usuarios.turista AS t ON r.idTurista = t.idTurista
+    JOIN 
+        reservas.metodoPago AS mp ON r.idMetodoDePago = mp.idMetodoPago
+    WHERE 
+        e.idEstablecimiento = pidEstablecimiento;
+END;
+$$ LANGUAGE plpgsql;
+
+
+SELECT * FROM obtenerReservasPorEstablecimiento(2);
+
+-- ver las reservas por un turista
+CREATE OR REPLACE FUNCTION obtenerReservasPorTurista(pidTurista INT)
+RETURNS TABLE(
+    reservaId INT,
+    cantidadPersonas INT,
+    fechaReserva DATE,
+    fechaSalida DATE,
+    fechaRegreso DATE,
+    totalPago DECIMAL(10,2),
+    estadoReserva estado_reserva,
+    servicioId INT,
+    servicioNombre VARCHAR,
+    establecimientoNombre VARCHAR,
+    metodoPagoNombre VARCHAR
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        r.idReserva AS reservaId,
+        r.cantidadPersonas,
+        r.fechaReserva,
+        r.fechaSalida,
+        r.fechaRegreso,
+        r.totalPago,
+        r.estadoReserva,
+        s.idServicio AS servicioId,
+        s.nombreServicio AS servicioNombre,
+        e.nombreEstablecimiento AS establecimientoNombre,
+        mp.nombreMetodoPago AS metodoPagoNombre
+    FROM 
+        reservas.reserva AS r
+    JOIN 
+        servicios.servicio AS s ON r.idServicio = s.idServicio
+    JOIN 
+        usuarios.establecimiento AS e ON s.idEstablecimiento = e.idEstablecimiento
+    JOIN 
+        reservas.metodoPago AS mp ON r.idMetodoDePago = mp.idMetodoPago
+    WHERE 
+        r.idTurista = pidTurista;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+SELECT * FROM obtenerReservasPorTurista(1);
+
+-- reserva por id 
+CREATE OR REPLACE FUNCTION obtenerReservaPorId(pidReserva INT)
+RETURNS TABLE(
+    reservaId INT,
+    cantidadPersonas INT,
+    fechaReserva DATE,
+    fechaSalida DATE,
+    fechaRegreso DATE,
+    totalPago DECIMAL(10,2),
+    estadoReserva estado_reserva,
+    servicioId INT,
+    servicioNombre VARCHAR,
+    establecimientoNombre VARCHAR,
+    turistaId INT,
+    turistaNombre VARCHAR,
+    metodoPagoNombre VARCHAR
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        r.idReserva AS reservaId,
+        r.cantidadPersonas,
+        r.fechaReserva,
+        r.fechaSalida,
+        r.fechaRegreso,
+        r.totalPago,
+        r.estadoReserva,
+        s.idServicio AS servicioId,
+        s.nombreServicio AS servicioNombre,
+        e.nombreEstablecimiento AS establecimientoNombre,
+        t.idTurista AS turistaId,
+        CONCAT(t.primerNombreTurista, ' ', t.primerApellidoTurista)::VARCHAR AS turistaNombre,  -- Conversión explícita a VARCHAR
+        mp.nombreMetodoPago AS metodoPagoNombre
+    FROM 
+        reservas.reserva AS r
+    JOIN 
+        servicios.servicio AS s ON r.idServicio = s.idServicio
+    JOIN 
+        usuarios.establecimiento AS e ON s.idEstablecimiento = e.idEstablecimiento
+    JOIN 
+        usuarios.turista AS t ON r.idTurista = t.idTurista
+    JOIN 
+        reservas.metodoPago AS mp ON r.idMetodoDePago = mp.idMetodoPago
+    WHERE 
+        r.idReserva = pidReserva;
+END;
+$$ LANGUAGE plpgsql;
 
 
 
