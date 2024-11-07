@@ -2111,8 +2111,46 @@ CALL editarResena(
             pestadoEstablecimiento => 'ACTIVO'
         );
 
+-- establecimiento por id
+
+    CREATE OR REPLACE FUNCTION usuarios.establecimientoPorId(
+        pidEstablecimiento INT
+    )
+    RETURNS TABLE (
+        idEstablecimiento INT,
+        nombreEstablecimiento VARCHAR,
+        nit BIGINT,
+        email VARCHAR,
+        idUbicacion INT,
+        estadoEstablecimiento estado_activo_inactivo,
+        idMunicipio INT,
+        calle VARCHAR,
+        numero VARCHAR,
+        informacionAdicional TEXT,
+        estadoUbicacion estado_activo_inactivo
+    ) AS $$
+    BEGIN
+        RETURN QUERY
+        SELECT 
+            establecimiento.idEstablecimiento,
+            establecimiento.nombreEstablecimiento,
+            establecimiento.nit,
+            establecimiento.email,
+            establecimiento.idUbicacion,
+            establecimiento.estadoEstablecimiento,
+            ubicacion.idMunicipio,
+            ubicacion.calle,
+            ubicacion.numero,
+            ubicacion.informacionAdicional,
+            ubicacion.estadoUbicacion
+        FROM usuarios.establecimiento
+        JOIN servicios.ubicacion ON establecimiento.idUbicacion = ubicacion.idUbicacion
+        WHERE establecimiento.idEstablecimiento = pidEstablecimiento;
+    END;
+    $$ LANGUAGE plpgsql;
 
 
+    
     -- Crear un servicio
        CREATE OR REPLACE PROCEDURE crearServicio(
             pnombreServicio VARCHAR(50),
@@ -2265,6 +2303,32 @@ CALL modificarServicio(
     pestadoServicio => 'DISPONIBLE',
     pcategorias => ARRAY[2, 4]           
 );
+
+--- Consulta de auditoria de reserva
+CREATE OR REPLACE FUNCTION auditoria.consultarReservasAuditoria()
+RETURNS TABLE (
+    idAuditoriaReserva INT,
+    usuario VARCHAR,
+    nombreTabla VARCHAR,
+    tipoOperacion VARCHAR,
+    fechaOperacion TIMESTAMPTZ,
+    datosAnteriores JSONB,
+    datosNuevos JSONB
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        reservaAuditoria.idAuditoriaReserva,
+        reservaAuditoria.usuario,
+        reservaAuditoria.nombreTabla,
+        reservaAuditoria.tipoOperacion,
+        reservaAuditoria.fechaOperacion,
+        reservaAuditoria.datosAnteriores,
+        reservaAuditoria.datosNuevos
+    FROM auditoria.reservaAuditoria
+    ORDER BY fechaOperacion DESC;
+END;
+$$ LANGUAGE plpgsql;
 
 
 

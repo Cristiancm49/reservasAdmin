@@ -60,11 +60,34 @@ const getAllmPagos = async (req, res) => {
     }
   };
 
+  const getAllAuditoriaResevas = async(req, res) => {
+    try {
+      const query = `
+        SELECT * FROM auditoria.consultarReservasAuditoria();
+      `;
+
+      const result = await pool.query(query);
+      if (result.rows.length === 0) return res.status(404).json({
+        message: 'No se encontraron registros de auditoria en la tabla reservas.'
+      })
+      res.json(result.rows)
+      
+    } catch (error) {
+      console.error("Error al obtener datos de auditoria:", error);
+      res
+        .status(500)
+        .json({ error: "Ocurrió un error al obtener los datos de auditoria" });
+    }
+
+
+  }
+
 
 module.exports = {
     getAllCategorias,
     getAllmPagos,
     getAllTiposDocumentos,
     getAllMunicipios, 
-    getAllTiposServicios
+    getAllTiposServicios,
+    getAllAuditoriaResevas
 }
