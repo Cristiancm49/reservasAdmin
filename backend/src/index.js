@@ -8,6 +8,7 @@ const caracteristicasRoutes = require('./routes/caracteristicas.routes');
 const reservasRoutes = require('./routes/reservas.routes');
 const usuariosRoutes = require('./routes/usuarios.routes');
 const establecimientoRoutes = require('./routes/establecimientos.routes');
+const turistaRouter = require('./routes/turista.routes')
 const app = express();
 
 app.use(morgan('dev'));
@@ -17,6 +18,7 @@ app.use('/api/caracteristicas', caracteristicasRoutes);
 app.use('/api/reservas', reservasRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/establecimientos', establecimientoRoutes);
+app.use('/api/turistas', turistaRouter);
 
 
 app.listen(3000);

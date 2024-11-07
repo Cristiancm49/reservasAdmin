@@ -1974,6 +1974,39 @@ CALL editarResena(
         pestadoTurista => 'ACTIVO'
     );
 
+
+-- consultar turista por id 
+CREATE OR REPLACE FUNCTION usuarios.buscarTuristaPorId(
+    pidTurista INT
+)
+RETURNS TABLE (
+    idTurista INT,
+    idTipoDocumento INT,
+    documentoTurista BIGINT,
+    primerNombreTurista VARCHAR,
+    segundoNombreTurista VARCHAR,
+    primerApellidoTurista VARCHAR,
+    segundoApellidoTurista VARCHAR,
+    telefono VARCHAR,
+    estadoTurista estado_activo_inactivo
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        turista.idTurista,
+        turista.idTipoDocumento,
+        turista.documentoTurista,
+        turista.primerNombreTurista,
+        turista.segundoNombreTurista,
+        turista.primerApellidoTurista,
+        turista.segundoApellidoTurista,
+        turista.telefono,
+        turista.estadoTurista
+    FROM usuarios.turista
+    WHERE turista.idTurista = pidTurista;
+END;
+$$ LANGUAGE plpgsql;
+
    
 
     
@@ -2150,7 +2183,7 @@ CALL editarResena(
     $$ LANGUAGE plpgsql;
 
 
-    
+
     -- Crear un servicio
        CREATE OR REPLACE PROCEDURE crearServicio(
             pnombreServicio VARCHAR(50),
