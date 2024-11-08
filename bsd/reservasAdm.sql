@@ -1780,15 +1780,13 @@ CALL editarResena(
         CREATE OR REPLACE PROCEDURE crearUsuario(
             pcontrasenaUsuario VARCHAR(12),
             pemailUsuario VARCHAR(100),
-            pidRol INT,
-            pestadoUsuario estado_activo_inactivo
+            pidRol INT
         )
         LANGUAGE plpgsql
         AS $$
         DECLARE
             vidUsuario INT;
         BEGIN
-            
             INSERT INTO usuarios.usuario (
                 contrasenaUsuario,
                 email,
@@ -1798,19 +1796,18 @@ CALL editarResena(
                 pcontrasenaUsuario,
                 pemailUsuario,
                 pidRol,
-                pestadoUsuario
+                'ACTIVO'  
             ) RETURNING idUsuario INTO vidUsuario;
 
             RAISE NOTICE 'Usuario creado exitosamente con ID %', vidUsuario;
         END;
         $$;
 
-
         CALL crearUsuario(
         pcontrasenaUsuario => 'password123',
         pemailUsuario => 'usuario@example.com',
         pidRol => 2,  
-        pestadoUsuario => 'ACTIVO'
+        
         );
 
         -- verificar email de usuario que no de duplique
@@ -1872,8 +1869,7 @@ CALL editarResena(
         psegundoNombreTurista VARCHAR(50),
         pprimerApellidoTurista VARCHAR(50),
         psegundoApellidoTurista VARCHAR(50),
-        ptelefono VARCHAR(10),
-        pestadoTurista estado_activo_inactivo
+        ptelefono VARCHAR(10)
         )
         LANGUAGE plpgsql
         AS $$
@@ -1892,7 +1888,7 @@ CALL editarResena(
                     telefono
                 ) VALUES (
                     pidTipoDocumento,
-                    pestadoTurista,
+                    'ACTIVO',
                     pdocumentoTurista,
                     pprimerNombreTurista,
                     psegundoNombreTurista,
@@ -1909,6 +1905,50 @@ CALL editarResena(
                 RAISE NOTICE 'Turista con ID % creado y relacionado con el usuario con ID %', vidTurista, pidUsuario;
         END;
         $$;
+
+
+        --- informaicon del turista relacionado a un usuario
+
+        CREATE OR REPLACE FUNCTION turistaPorUsuario(pidUsuario INT)
+        RETURNS TABLE(
+            turistaId INT,
+            documentoTurista BIGINT,
+            primerNombre VARCHAR,
+            segundoNombre VARCHAR,
+            primerApellido VARCHAR,
+            segundoApellido VARCHAR,
+            telefono VARCHAR,
+            estadoTurista estado_activo_inactivo,
+            usuarioId INT,
+            email VARCHAR,
+            rolNombre VARCHAR,
+            estadoUsuario estado_activo_inactivo
+        ) AS $$
+        BEGIN
+            RETURN QUERY
+            SELECT 
+                t.idTurista AS turistaId,
+                t.documentoTurista,
+                t.primerNombreTurista AS primerNombre,
+                t.segundoNombreTurista AS segundoNombre,
+                t.primerApellidoTurista AS primerApellido,
+                t.segundoApellidoTurista AS segundoApellido,
+                t.telefono,
+                t.estadoTurista,
+                u.idUsuario AS usuarioId,
+                u.email,
+                r.nombreRol AS rolNombre,
+                u.estadoUsuario
+            FROM 
+                usuarios.usuario AS u
+            JOIN 
+                usuarios.turista AS t ON u.idTurista = t.idTurista
+            JOIN 
+                usuarios.rol AS r ON u.idRol = r.idRol
+            WHERE 
+                u.idUsuario = pidUsuario;
+        END;
+        $$ LANGUAGE plpgsql;
 
         CALL crearTurista(
         pidUsuario => 3,               

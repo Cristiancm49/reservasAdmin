@@ -34,8 +34,7 @@ const createTurista = async (req, res) => {
         segundoNombreTurista,
         primerApellidoTurista,
         segundoApellidoTurista,
-        telefono,
-        estadoTurista
+        telefono
     } = req.body;
 
     try {
@@ -48,8 +47,7 @@ const createTurista = async (req, res) => {
                 psegundoNombreTurista := $5,
                 pprimerApellidoTurista := $6,
                 psegundoApellidoTurista := $7,
-                ptelefono := $8,
-                pestadoTurista := $9
+                ptelefono := $8
             );
         `;
 
@@ -61,11 +59,17 @@ const createTurista = async (req, res) => {
             segundoNombreTurista,
             primerApellidoTurista,
             segundoApellidoTurista,
-            telefono,
-            estadoTurista
+            telefono
         ]);
 
-        res.status(200).json({ message: 'Turista creado y relacionado con el usuario exitosamente' });
+        const result = await pool.query(
+            `SELECT * FROM turistaPorUsuario($1);`, [idUsuario]
+        );
+
+        const dataTurista = result.rows[0]
+        
+
+        res.status(200).json({ dataTurista,message: 'Turista creado y relacionado con el usuario exitosamente' });
     } catch (error) {
         console.error("Error al crear el turista:", error);
         res.status(500).json({ error: "Ocurrió un error al crear el turista" });

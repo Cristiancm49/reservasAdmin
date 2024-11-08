@@ -1,5 +1,6 @@
 
 const express = require('express');
+const cors = require('cors');
 const morgan = require('morgan');
 
 
@@ -11,6 +12,7 @@ const establecimientoRoutes = require('./routes/establecimientos.routes');
 const turistaRouter = require('./routes/turista.routes')
 const app = express();
 
+app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 app.use('/api/servicios',serviciosRoutes);

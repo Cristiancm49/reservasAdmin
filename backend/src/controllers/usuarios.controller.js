@@ -49,23 +49,21 @@ const loginUsuarios = async(req, res) => {
 }
 
 const createUsuario = async (req, res) => {
-    const { contrasenaUsuario, emailUsuario, idRol, estadoUsuario } = req.body;
+    const { contrasenaUsuario, emailUsuario, idRol } = req.body;
 
     try {
         const query = `
             CALL crearUsuario(
                 pcontrasenaUsuario := $1,
                 pemailUsuario := $2,
-                pidRol := $3,
-                pestadoUsuario := $4
+                pidRol := $3   
             );
         `;
 
         await pool.query(query, [
             contrasenaUsuario,
             emailUsuario,
-            idRol,
-            estadoUsuario
+            idRol
         ]);
 
         res.status(200).json({ message: 'Usuario creado exitosamente' });

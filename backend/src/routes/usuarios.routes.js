@@ -9,7 +9,7 @@ const {
 
 const router = Router();
 
-router.get('/login', loginUsuarios);
+router.post('/login', loginUsuarios);
 
 router.put('/editPassword/:idUsuario', updateUsuario);
 
