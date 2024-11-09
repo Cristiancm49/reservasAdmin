@@ -1,7 +1,20 @@
 // CardReserva.js
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 function CardReserva({ reserva }) {
+
+  const navigate = useNavigate();
+
+  const handleEditClick = () => {
+    navigate(`/reseervasRegistradas/${reserva.reservaid}`, {
+      state: {
+        maxpersonaslimite: reserva.maxpersonaslimite,
+      },
+    });
+  };
+
+
   return (
     <div className="w-5/6 h-auto p-4 bg-white shadow-lg rounded-lg overflow-hidden mx-auto mt-5">
      
@@ -10,7 +23,7 @@ function CardReserva({ reserva }) {
         <p className="text-gray-600">{new Date(reserva.fechareserva).toLocaleDateString()}</p>
       </div>
 
-      {/* Fechas de salida y regreso */}
+      
       <div className="flex justify-between items-center mb-2">
         <div>
           <span className="font-medium text-gray-700">Fecha de Salida: </span>
@@ -50,6 +63,12 @@ function CardReserva({ reserva }) {
         <span className="font-medium text-gray-700">Método de Pago: </span>
         <span className="text-gray-600">{reserva.metodopagonombre}</span>
       </div>
+      <button
+        onClick={handleEditClick}
+        className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+      >
+        Editar Reserva
+      </button>
     </div>
   );
 }

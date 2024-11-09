@@ -1563,6 +1563,7 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
     vcupoMaximoReservas INT;
+    vlimiteMaxPersonas INT;
     vreservasSimultaneas INT;
     vprecioFinal DECIMAL;
     vtotalPago DECIMAL;
@@ -1573,7 +1574,7 @@ DECLARE
     vidCuponDescuento INT;
 BEGIN
     
-    SELECT idServicio, idTurista, idCuponDescuento INTO vidServicio, vidTurista, vidCuponDescuento
+    SELECT reserva.idServicio, reserva.idTurista, reserva.idCuponDescuento INTO vidServicio, vidTurista, vidCuponDescuento
     FROM reservas.reserva
     WHERE idReserva = pidReserva;
 
@@ -1586,18 +1587,26 @@ BEGIN
         RAISE EXCEPTION 'La fecha de salida (%), no puede ser anterior a la fecha actual', pfechaSalida;
     END IF;
 
-    
     IF pfechaRegreso < pfechaSalida THEN
         RAISE EXCEPTION 'La fecha de regreso (%) no puede ser anterior a la fecha de salida (%)', pfechaRegreso, pfechaSalida;
     END IF;
 
-   
+    
     vdiasReserva := (pfechaRegreso - pfechaSalida) + 1;
 
-    SELECT servicio.cupoMaximaReservas INTO vcupoMaximoReservas
+    
+    SELECT servicio.cupoMaximaReservas, servicio.limiteMaxPersonas 
+    INTO vcupoMaximoReservas, vlimiteMaxPersonas
     FROM servicios.servicio
     WHERE servicio.idServicio = vidServicio;
 
+    
+    IF pcantidadPersonas > vlimiteMaxPersonas THEN
+        RAISE EXCEPTION 'La cantidad de personas solicitada (%) excede el límite máximo permitido (%) para este servicio', 
+            pcantidadPersonas, vlimiteMaxPersonas;
+    END IF;
+
+    
     SELECT COUNT(*)
     INTO vreservasSimultaneas
     FROM reservas.reserva
@@ -1607,10 +1616,12 @@ BEGIN
       AND fechaSalida <= pfechaRegreso
       AND fechaRegreso >= pfechaSalida;
 
+    
     IF vreservasSimultaneas >= vcupoMaximoReservas THEN
         RAISE EXCEPTION 'No hay capacidad disponible para el servicio en las fechas solicitadas';
     END IF;
 
+    
     SELECT finalPrecio INTO vprecioFinal
     FROM servicios.vistaServicios
     WHERE vistaServicios.servicioId = vidServicio;
@@ -1619,6 +1630,7 @@ BEGIN
         RAISE EXCEPTION 'No se encontró el precio final para el servicio con id %', vidServicio;
     END IF;
 
+    
     IF vidCuponDescuento IS NOT NULL THEN
         SELECT cuponesDescuento.cantidadDescuento INTO vdescuento
         FROM reservas.cuponesDescuento
@@ -1630,8 +1642,10 @@ BEGIN
         END IF;
     END IF;
 
+    
     vtotalPago := vprecioFinal * pcantidadPersonas * vdiasReserva;
 
+    -- Actualizar la reserva
     UPDATE reservas.reserva
     SET fechaSalida = pfechaSalida,
         fechaRegreso = pfechaRegreso,
@@ -1640,15 +1654,15 @@ BEGIN
         totalPago = vtotalPago
     WHERE idReserva = pidReserva;
 
-   
+  
     UPDATE reservas.facturaReserva
     SET montoTotal = vtotalPago
     WHERE idReserva = pidReserva;
 
-
     RAISE NOTICE 'Reserva con ID % modificada exitosamente con un nuevo total de pago de: %', pidReserva, ROUND(vtotalPago, 2);
 END;
 $$;
+
 
 CALL actualizarReserva(
     pidReserva => 1,               
@@ -2059,9 +2073,7 @@ $$ LANGUAGE plpgsql;
             pidMunicipio INT,
             pcalle VARCHAR(50),
             pnumero VARCHAR(50),
-            pinformacionAdicional TEXT,
-            pestadoUbicacion estado_activo_inactivo,
-            pestadoEstablecimiento estado_activo_inactivo
+            pinformacionAdicional TEXT
         )
         LANGUAGE plpgsql
         AS $$
@@ -2081,7 +2093,7 @@ $$ LANGUAGE plpgsql;
                 pcalle,
                 pnumero,
                 pinformacionAdicional,
-                pestadoUbicacion
+                'ACTIVO'
             ) RETURNING idUbicacion INTO vidUbicacion;
 
             
@@ -2096,7 +2108,7 @@ $$ LANGUAGE plpgsql;
                 pnit,
                 pemailEstablecimiento,
                 vidUbicacion,
-                pestadoEstablecimiento
+                'ACTIVO'
             ) RETURNING idEstablecimiento INTO vidEstablecimiento;
 
             
@@ -2109,16 +2121,15 @@ $$ LANGUAGE plpgsql;
         $$;
 
         CALL crearEstablecimiento(
-            pidUsuario => 4,
+            pidUsuario => 21,
             pnombreEstablecimiento => 'Hotel Sol',
             pnit => 123456789,
             pemailEstablecimiento => 'hotel@example.com',
             pidMunicipio => 2,
             pcalle => 'Calle Principal',
             pnumero => '123',
-            pinformacionAdicional => 'Frente al parque',
-            pestadoUbicacion => 'ACTIVO',
-            pestadoEstablecimiento => 'ACTIVO'
+            pinformacionAdicional => 'Frente al parque'
+
         );
 
 
@@ -2223,9 +2234,81 @@ $$ LANGUAGE plpgsql;
     $$ LANGUAGE plpgsql;
 
 
+    -- vista de promociones
+    CREATE OR REPLACE VIEW servicios.vistaPromociones AS
+    SELECT 
+        promocion.idPromocion AS promocionId,
+        promocion.descripcion AS descripcionPromocion,
+        promocion.porcentajeDescuento AS descuentoPorcentaje,
+        promocion.fechaInicio AS inicioPromocion,
+        promocion.fechaFinal AS finPromocion,
+        promocion.estadoPromocion AS estadoPromocion
+    FROM 
+        servicios.promocion;
+
 
     -- Crear un servicio
-       CREATE OR REPLACE PROCEDURE crearServicio(
+
+    CREATE OR REPLACE FUNCTION crearServicioConCategorias(
+        pnombreServicio VARCHAR(50),
+        pdescripcionServicio TEXT,
+        pprecioServicio DECIMAL(10,2),
+        pidTipoServicio INT,
+        pidPromocion INT,
+        pcupoMaximaReservas INT,
+        pidEstablecimiento INT,
+        plimiteMaxPersonas INT,
+        pestadoServicio estado_servicio,
+        pcategorias INT[]
+    )
+    RETURNS INT AS $$
+    DECLARE
+        vidServicio INT;
+        categoria INT;
+    BEGIN
+        INSERT INTO servicios.servicio (
+            nombreServicio,
+            descripcionServicio,
+            precioServicio,
+            idTipoServicio,
+            idPromocion,
+            cupoMaximaReservas,
+            idEstablecimiento,
+            limiteMaxPersonas,
+            estadoServicio
+        ) VALUES (
+            pnombreServicio,
+            pdescripcionServicio,
+            pprecioServicio,
+            pidTipoServicio,
+            pidPromocion,
+            pcupoMaximaReservas,
+            pidEstablecimiento,
+            plimiteMaxPersonas,
+            pestadoServicio
+        ) RETURNING idServicio INTO vidServicio;
+
+        FOREACH categoria IN ARRAY pcategorias LOOP
+            INSERT INTO servicios.serviciosCategoriaDetalle (
+                idCategoriaServicio,
+                idServicio,
+                descripcion,
+                estadoServicioCategoriaDetalle
+            ) VALUES (
+                categoria,
+                vidServicio,
+                'Descripción de la relación',  
+                'ACTIVO'
+            );
+        END LOOP;
+
+        RETURN vidServicio;
+    END;
+    $$ LANGUAGE plpgsql;
+
+
+        -- nuevo servicio actulaizado 
+        CREATE OR REPLACE FUNCTION createServicio(
             pnombreServicio VARCHAR(50),
             pdescripcionServicio TEXT,
             pprecioServicio DECIMAL(10,2),
@@ -2235,15 +2318,13 @@ $$ LANGUAGE plpgsql;
             pidEstablecimiento INT,
             plimiteMaxPersonas INT,
             pestadoServicio estado_servicio,
-            pcategorias INT[]  
+            pcategorias INT[]
         )
-        LANGUAGE plpgsql
-        AS $$
+        RETURNS INT AS $$
         DECLARE
             vidServicio INT;
-            categoria INT;  
+            categoria INT;
         BEGIN
-            
             INSERT INTO servicios.servicio (
                 nombreServicio,
                 descripcionServicio,
@@ -2266,7 +2347,6 @@ $$ LANGUAGE plpgsql;
                 pestadoServicio
             ) RETURNING idServicio INTO vidServicio;
 
-            
             FOREACH categoria IN ARRAY pcategorias LOOP
                 INSERT INTO servicios.serviciosCategoriaDetalle (
                     idCategoriaServicio,
@@ -2281,9 +2361,10 @@ $$ LANGUAGE plpgsql;
                 );
             END LOOP;
 
-            RAISE NOTICE 'Servicio creado con ID % y categorías asignadas', vidServicio;
+            RETURN vidServicio;
         END;
-        $$;
+        $$ LANGUAGE plpgsql;
+
 
 
 

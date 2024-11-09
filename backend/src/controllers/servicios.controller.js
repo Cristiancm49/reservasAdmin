@@ -48,21 +48,12 @@ const createServicio = async (req, res) => {
 
   try {
     const query = `
-          CALL crearServicio(
-            pnombreServicio := $1,
-            pdescripcionServicio := $2,
-            pprecioServicio := $3,
-            pidTipoServicio := $4,
-            pidPromocion := $5,
-            pcupoMaximaReservas := $6,
-            pidEstablecimiento := $7,
-            plimiteMaxPersonas := $8,
-            pestadoServicio := $9,
-            pcategorias := $10
-          )
+SELECT * FROM crearServicioConCategorias(
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+      ) AS idServicio;
         `;
 
-    await pool.query(query, [
+    const result = await pool.query(query, [
       nombreServicio,
       descripcionServicio,
       precioServicio,
@@ -75,7 +66,10 @@ const createServicio = async (req, res) => {
       categorias,
     ]);
 
-    res.status(200).json({ message: "Servicio creado exitosamente" });
+    const idServicio = result.rows[0].idservicio;
+    res.status(200).json({ idServicio, message: 'Servicio creado exitosamente' });
+
+    
   } catch (error) {
     console.error("Error al crear el servicio:", error);
     res.status(500).json({ error: "Ocurrió un error al crear el servicio" });

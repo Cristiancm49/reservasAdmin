@@ -7,7 +7,7 @@ function Reservas() {
   const [reservas, setReservas] = useState([]);
   const [error, setError] = useState('');
 
-  // Obtén el idTurista desde localStorage
+  
   const idTurista = JSON.parse(localStorage.getItem('dataTurista'))?.turistaid;
 
   useEffect(() => {

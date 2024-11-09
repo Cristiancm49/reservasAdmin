@@ -38,7 +38,8 @@ function Login() {
       } else if (data.idturista !== null) {
         navigate("/home");
       } else if (data.idestablecimiento !== null) {
-        navigate("/homeestablecimiento");
+        localStorage.setItem("idEstablecimiento", data.idestablecimiento);
+        navigate("/crearServicio");
       }
       
     } catch (error) {
@@ -57,7 +58,7 @@ function Login() {
         {error && <p className="text-center text-red-500">{error}</p>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Email */}
+          
           <div>
             <label className="block text-gray-600 font-medium mb-2" htmlFor="email">
               Correo Electrónico
@@ -73,7 +74,7 @@ function Login() {
             />
           </div>
 
-          {/* Contraseña */}
+          
           <div>
             <label className="block text-gray-600 font-medium mb-2" htmlFor="password">
               Contraseña
@@ -89,7 +90,7 @@ function Login() {
             />
           </div>
 
-          {/* Botón de inicio de sesión */}
+          
           <button
             type="submit"
             className="w-full py-2 px-4 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 transition duration-300"

@@ -4,7 +4,10 @@ const {
     getAllmPagos, 
     getAllTiposDocumentos, 
     getAllMunicipios, 
-    getAllAuditoriaResevas 
+    getAllAuditoriaResevas, 
+    getAllPromociones, 
+    getAllTiposServicios
+    
 } = require('../controllers/caracteristicas.controller')
 
 const router = Router();
@@ -17,6 +20,9 @@ router.get('/getTipoDocumentos', getAllTiposDocumentos);
 
 router.get('/getMunicipios', getAllMunicipios);
 
-router.get('/getAllAuditoria', getAllAuditoriaResevas)
+router.get('/getAllAuditoria', getAllAuditoriaResevas);
 
+router.get('/getPromociones', getAllPromociones);
+
+router.get('/getTipos', getAllTiposServicios);
 module.exports = router;

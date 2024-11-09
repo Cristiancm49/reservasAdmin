@@ -9,9 +9,7 @@ const createEstablecimiento = async (req, res) => {
         idMunicipio,
         calle,
         numero,
-        informacionAdicional,
-        estadoUbicacion,
-        estadoEstablecimiento
+        informacionAdicional
     } = req.body;
 
     try {
@@ -24,9 +22,7 @@ const createEstablecimiento = async (req, res) => {
                 pidMunicipio := $5,
                 pcalle := $6,
                 pnumero := $7,
-                pinformacionAdicional := $8,
-                pestadoUbicacion := $9,
-                pestadoEstablecimiento := $10
+                pinformacionAdicional := $8
             );
         `;
 
@@ -38,9 +34,7 @@ const createEstablecimiento = async (req, res) => {
             idMunicipio,
             calle,
             numero,
-            informacionAdicional,
-            estadoUbicacion,
-            estadoEstablecimiento
+            informacionAdicional
         ]);
 
         res.status(200).json({ message: 'Establecimiento creado exitosamente' });

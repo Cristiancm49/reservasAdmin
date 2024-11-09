@@ -46,7 +46,7 @@ function RegistroTurista() {
     setSuccess('');
 
     try {
-      // Envía los datos del formulario junto con el idUsuario al backend
+      
       const response = await axios.post('http://localhost:3000/api/turistas/createTurista', {
         idUsuario,
         ...formData
@@ -61,7 +61,7 @@ function RegistroTurista() {
       console.log('Datos del turista guardados en localStorage:', dataTurista);
       console.log('Respuesta del servidor:', response.data);
 
-      // Limpia el formulario
+      
       setFormData({
         idTipoDocumento: '',
         documentoTurista: '',
@@ -81,13 +81,13 @@ function RegistroTurista() {
     <div className="w-full max-w-md mx-auto p-6 bg-white rounded-lg shadow-md mt-5">
       <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Registro de Turista</h2>
 
-      {/* Mensajes de éxito y error */}
+      
       {success && <p className="text-center text-green-500">{success}</p>}
       {error && <p className="text-center text-red-500">{error}</p>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         
-        {/* Tipo de Documento */}
+        
         <div>
           <label htmlFor="idTipoDocumento" className="block text-gray-700 font-medium mb-2">Tipo de Documento</label>
           <select
@@ -106,7 +106,7 @@ function RegistroTurista() {
           </select>
         </div>
 
-        {/* Documento */}
+        
         <div>
           <label htmlFor="documentoTurista" className="block text-gray-700 font-medium mb-2">Número de Documento</label>
           <input
@@ -120,7 +120,7 @@ function RegistroTurista() {
           />
         </div>
 
-        {/* Primer Nombre */}
+       
         <div>
           <label htmlFor="primerNombreTurista" className="block text-gray-700 font-medium mb-2">Primer Nombre</label>
           <input
@@ -134,7 +134,7 @@ function RegistroTurista() {
           />
         </div>
 
-        {/* Segundo Nombre */}
+      
         <div>
           <label htmlFor="segundoNombreTurista" className="block text-gray-700 font-medium mb-2">Segundo Nombre</label>
           <input
@@ -148,7 +148,7 @@ function RegistroTurista() {
           />
         </div>
 
-        {/* Primer Apellido */}
+        
         <div>
           <label htmlFor="primerApellidoTurista" className="block text-gray-700 font-medium mb-2">Primer Apellido</label>
           <input
@@ -162,7 +162,7 @@ function RegistroTurista() {
           />
         </div>
 
-        {/* Segundo Apellido */}
+        
         <div>
           <label htmlFor="segundoApellidoTurista" className="block text-gray-700 font-medium mb-2">Segundo Apellido</label>
           <input
@@ -176,7 +176,6 @@ function RegistroTurista() {
           />
         </div>
 
-        {/* Teléfono */}
         <div>
           <label htmlFor="telefono" className="block text-gray-700 font-medium mb-2">Teléfono</label>
           <input
@@ -190,7 +189,7 @@ function RegistroTurista() {
           />
         </div>
 
-        {/* Botón de Registro */}
+        
         <button
           type="submit"
           className="w-full py-2 px-4 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 transition duration-300"

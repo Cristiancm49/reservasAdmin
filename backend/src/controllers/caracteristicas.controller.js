@@ -60,6 +60,24 @@ const getAllmPagos = async (req, res) => {
     }
   };
 
+  const getAllPromociones = async(req, res) => {
+    try {
+      const result = await pool.query("SELECT * FROM servicios.vistaPromociones;")
+      res.json(result.rows)
+      
+    } catch (error) {
+      console.error("Error al obtener datos de Promociones:", error);
+      res
+        .status(500)
+        .json({ error: "Ocurrió un error al obtener los datos de Promociones" });
+    }
+  };
+
+
+
+
+
+
   const getAllAuditoriaResevas = async(req, res) => {
     try {
       const query = `
@@ -89,5 +107,6 @@ module.exports = {
     getAllTiposDocumentos,
     getAllMunicipios, 
     getAllTiposServicios,
-    getAllAuditoriaResevas
+    getAllAuditoriaResevas,
+    getAllPromociones
 }
