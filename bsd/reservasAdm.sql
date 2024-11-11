@@ -751,6 +751,7 @@ CREATE DATABASE reservas;
     ADD CONSTRAINT fk_reserva_servicio FOREIGN KEY (idServicio) REFERENCES servicios.servicio(idServicio);
 
     ALTER TABLE reservas.facturaReserva
+    ADD CONSTRAINT uq_facturaReserva_reserva UNIQUE (idReserva),
     ADD CONSTRAINT fk_facturaReserva_reserva FOREIGN KEY (idReserva) REFERENCES reservas.reserva(idReserva);
 
 -- SE HACE CREACION DE TABLAS DE AUDITORIA CON SUS TRIGGERS Y FUNCIONES
